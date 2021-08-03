@@ -23,11 +23,14 @@ app.use(express.json());
 app.use(errorHandler);
 
 mongoose
-  .connect("mongodb://localhost:27017/notesdb", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true,
-  })
+  .connect(
+    `mongodb+srv://${process.env.DB_USER_NAME}:${process.env.DB_PASSWORD}@cluster0.1ypl3.mongodb.net/${process.env.DB_COLLECTION_NAME}?retryWrites=true&w=majority`,
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useCreateIndex: true,
+    }
+  )
   .then(() => console.log("connected"))
   .catch((err) => console.log(err));
 
@@ -40,7 +43,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1/notes", noteRouter);
 app.use("/api/v1", userRouter);
 
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 5000;
 app.listen(port, () => {
   console.log(`App listening on http://localhost:${port}`);
 });
