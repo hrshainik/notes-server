@@ -7,12 +7,24 @@ const userRouter = require("./routes/userRoutes");
 
 const app = express();
 
+// Error handler
+const errorHandler = (err, req, res, next) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(500).json({
+    message: err,
+  });
+};
+
 app.use(express.json());
+app.use(errorHandler);
 
 mongoose
   .connect("mongodb://localhost:27017/notesdb", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useCreateIndex: true,
   })
   .then(() => console.log("connected"))
   .catch((err) => console.log(err));
@@ -24,8 +36,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1/notes", noteRouter);
-
-app.use("/api/v1/users", userRouter);
+app.use("/api/v1", userRouter);
 
 const port = process.env.PORT || 8000;
 app.listen(port, () => {

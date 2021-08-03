@@ -1,106 +1,146 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const noteSchema = require("../schemas/noteSchema");
+const userSchema = require("../schemas/userSchema");
 
 const Note = new mongoose.model("Note", noteSchema);
+const User = new mongoose.model("User", userSchema);
 
 // Get all notes
-exports.getAllNotes = (req, res) => {
-  Note.find({}, (err, data) => {
-    if (err) {
+exports.getAllNotes = async (req, res) => {
+  try {
+    const data = await Note.find({ user: req.userID });
+    if (!data) {
       res.status(500).json({
         status: "fail",
         message: "Server side error!",
       });
-    } else {
-      res.status(200).json({
-        status: "success",
-        result: data.length,
-        message: "Get all notes successfully!",
-        data,
-      });
     }
-  });
+    res.status(200).json({
+      status: "success",
+      result: data.length,
+      message: "Get all notes successfully!",
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "fail",
+      message: "Server side error!",
+    });
+  }
 };
 
 // Create a note
-exports.createNote = (req, res) => {
-  const newNote = new Note(req.body);
-  newNote.save((err) => {
-    if (err) {
-      res.status(500).json({
-        status: "fail",
-        message: "Server side error!",
-      });
-    } else {
-      res.status(200).json({
-        status: "success",
-        message: "Note created successfully!",
-      });
-    }
-  });
+exports.createNote = async (req, res) => {
+  try {
+    const newNote = new Note({
+      ...req.body,
+      user: req.userID, // this userID came form checkValidUser middleware
+    });
+    const todo = await newNote.save();
+
+    // push this todo id to this user collection
+    await User.updateOne(
+      { _id: req.userID },
+      {
+        $push: {
+          todos: todo._id,
+        },
+      }
+    );
+
+    res.status(200).json({
+      status: "success",
+      message: "Note created successfully!",
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "fail",
+      message: "Server side error!",
+    });
+  }
 };
 
 // Get a note by id
-exports.getNote = (req, res) => {
-  Note.find({ _id: req.params.id }, (err, data) => {
-    if (err) {
+exports.getNote = async (req, res) => {
+  try {
+    const data = await Note.findOne({
+      $and: [{ _id: req.params.id }, { user: req.userID }],
+    });
+    if (!data) {
       res.status(500).json({
         status: "fail",
         message: "Server side error!",
       });
-    } else {
-      res.status(200).json({
-        status: "success",
-        message: "Get a note by id successfully!",
-        data,
-      });
     }
-  });
+    res.status(200).json({
+      status: "success",
+      message: "Get a note by id successfully!",
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "fail",
+      message: "Server side error!",
+    });
+  }
 };
 
 // Update a note by id
-exports.updateNote = (req, res) => {
-  Note.updateOne(
-    { _id: req.params.id },
-    {
-      $set: {
-        title: req.body.title,
-        description: req.body.description,
-        pin: req.body.pin,
+exports.updateNote = async (req, res) => {
+  try {
+    const data = await Note.updateOne(
+      {
+        $and: [{ _id: req.params.id }, { user: req.userID }],
       },
-    },
-    (err, data) => {
-      if (err) {
-        res.status(500).json({
-          status: "fail",
-          message: "Server side error!",
-        });
-      } else {
-        res.status(200).json({
-          status: "success",
-          message: "Note updated successfully!",
-          ...data,
-        });
+      {
+        $set: {
+          title: req.body.title,
+          description: req.body.description,
+          pin: req.body.pin,
+        },
       }
-    }
-  );
-};
-
-// Delete a note by id
-exports.deleteNote = (req, res) => {
-  Note.deleteOne({ _id: req.params.id }, (err, data) => {
-    if (err) {
+    );
+    if (!data) {
       res.status(500).json({
         status: "fail",
         message: "Server side error!",
       });
-    } else {
-      res.status(200).json({
-        status: "success",
-        message: "Note deleted successfully!",
-        ...data,
+    }
+    res.status(200).json({
+      status: "success",
+      message: "Note updated successfully!",
+      ...data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "fail",
+      message: "Server side error!",
+    });
+  }
+};
+
+// Delete a note by id
+exports.deleteNote = async (req, res) => {
+  try {
+    const data = await Note.deleteOne({
+      $and: [{ _id: req.params.id }, { user: req.userID }],
+    });
+    if (!data) {
+      res.status(500).json({
+        status: "fail",
+        message: "Server side error!",
       });
     }
-  });
+    res.status(200).json({
+      status: "success",
+      message: "Note deleted successfully!",
+      ...data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "fail",
+      message: "Server side error!",
+    });
+  }
 };

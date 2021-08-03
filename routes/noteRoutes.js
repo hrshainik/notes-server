@@ -1,17 +1,18 @@
 const express = require("express");
 const noteController = require("../controllers/noteControllers");
+const checkValidUser = require("../middleware/checkValidUser");
 
 const noteRouter = express.Router();
 
 noteRouter
   .route("/")
-  .get(noteController.getAllNotes)
-  .post(noteController.createNote);
+  .get(checkValidUser, noteController.getAllNotes)
+  .post(checkValidUser, noteController.createNote);
 
 noteRouter
   .route("/:id")
-  .get(noteController.getNote)
-  .patch(noteController.updateNote)
-  .delete(noteController.deleteNote);
+  .get(checkValidUser, noteController.getNote)
+  .patch(checkValidUser, noteController.updateNote)
+  .delete(checkValidUser, noteController.deleteNote);
 
 module.exports = noteRouter;
