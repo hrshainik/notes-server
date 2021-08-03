@@ -7,6 +7,7 @@ userRouter
   .route("/")
   .get(userController.getAllUsers)
   .post(userController.createUser);
+
 userRouter
   .route("/:id")
   .get(userController.getUser)
