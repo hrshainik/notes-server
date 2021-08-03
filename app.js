@@ -1,5 +1,6 @@
 require("dotenv").config({ path: "./config.env" });
 const express = require("express");
+const cors = require("express");
 const mongoose = require("mongoose");
 
 const noteRouter = require("./routes/noteRoutes");
@@ -17,6 +18,7 @@ const errorHandler = (err, req, res, next) => {
   });
 };
 
+app.use(cors());
 app.use(express.json());
 app.use(errorHandler);
 
